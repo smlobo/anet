@@ -44,6 +44,8 @@ import PositionNew from './pages/positions/New'
 
 import RollupShow from './pages/rollup/Show'
 
+import InsightShow from './pages/insight/Show'
+
 import AdminIndex from './pages/admin/Index'
 
 import GraphiQL from './pages/GraphiQL'
@@ -94,6 +96,8 @@ ReactDOM.render((
 				</Route>
 
 				<Route path="rollup" component={RollupShow} />
+
+				<Route path="insight" component={InsightShow} />
 
 				<Route path="graphiql" component={GraphiQL} />
 
