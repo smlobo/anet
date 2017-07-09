@@ -98,9 +98,11 @@ class Nav extends Component {
 					<NavItem>Daily rollup</NavItem>
 				</Link>
 
+				{currentUser.isAdmin() &&
 				<Link to="/insight">
 					<NavItem>Insight</NavItem>
 				</Link>
+				}
 
 				{process.env.NODE_ENV === 'development' &&
 					<Link to="/graphiql">
