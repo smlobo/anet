@@ -1,17 +1,10 @@
 import React from 'react'
 import Page from 'components/Page'
-import autobind from 'autobind-decorator'
-import moment from 'moment'
-
-import { DropdownButton, MenuItem, Modal, Alert, Button } from 'react-bootstrap'
 
 import Breadcrumbs from 'components/Breadcrumbs'
-import ReportCollection from 'components/ReportCollection'
-import ReportSummary from 'components/ReportSummary'
-import Form from 'components/Form'
 
 import API from 'api'
-import { Report } from 'models'
+
 
 var d3 = null/* required later */
 
@@ -60,7 +53,7 @@ export default class InsightShow extends Page {
 
 	fetchData(props) {
 		API.query(/* GraphQL */`
-			personList(f:getAll, pageNum:0, pageSize:10)
+			personList(f:getAll, pageNum:0, pageSize:10000)
 		  {
 		    list
 		    {
@@ -71,7 +64,7 @@ export default class InsightShow extends Page {
 		    }
 		  }
 
-		  reportList(f:getAll, pageNum:0, pageSize:10)
+		  reportList(f:getAll, pageNum:0, pageSize:10000)
 			{
 			 	list
 			 	{
@@ -92,7 +85,7 @@ export default class InsightShow extends Page {
 	componentDidUpdate() {
 
 		let state = this.state;
-		if (!state.graphData || !d3) {
+		if (!state.graphData || !d3 || !state.graphData.personList) {
 			return
 		}
 
@@ -158,7 +151,7 @@ export default class InsightShow extends Page {
 
 		var force = d3.forceSimulation(nodes)
 			.force("charge", d3.forceManyBody().strength(-100))
-			.force("link", d3.forceLink(links).strength(function(d){return d.meetings/13}))
+			.force("link", d3.forceLink(links).id(d => {return d.id}).strength(function(d){return d.meetings/13}))
 			.force("center", d3.forceCenter(width / 2, height / 2))
 			.force("collide", d3.forceCollide(state.radius).strength(.1))
 			.on("tick", tick)
