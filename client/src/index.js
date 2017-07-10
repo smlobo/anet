@@ -47,6 +47,7 @@ import AdminIndex from 'pages/admin/Index'
 import MergePeople from 'pages/admin/MergePeople'
 
 import GraphiQL from 'pages/GraphiQL'
+import InsightShow from './pages/insight/Show'
 
 import OnboardingShow from 'pages/onboarding/Show'
 import OnboardingEdit from 'pages/onboarding/Edit'
@@ -99,6 +100,8 @@ ReactDOM.render((
 				</Route>
 
 				<Route path="rollup" component={RollupShow} />
+
+				<Route path="insight" component={InsightShow} />
 
 				<Route path="graphiql" component={GraphiQL} />
 

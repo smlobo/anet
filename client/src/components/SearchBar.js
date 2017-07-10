@@ -14,7 +14,12 @@ export default class SearchBar extends Component {
 		this.state = {
 			showAdvancedSearch: false
 		}
+
+		SearchBar.self = this  
 	}
+
+	static self // @vassil, ugly hack to highjack the search bar from insight page
+
 	componentWillMount() {
 		this.setQueryState()
 		this.unregisterHistoryListener = History.listen(this.setQueryState)
