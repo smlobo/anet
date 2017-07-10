@@ -33,7 +33,7 @@ export default class InsightShow extends Page {
 		super(props)
 		this.state = {
 			graphData: {},
-			radius: function (d) { return 7 + 1.4 * d.attendedReports.totalCount },
+			radius: function (d) { return Math.max(20,(5 +  0.3 * d.attendedReports.totalCount)) },
 			nodeColor: function (d) { return d3.rgb(d.role === 'ADVISOR' ? "blue" : "green"); },
 			linkWidth: function (d) { return d.meetings },
 			linkLabel: function (d) { return ""+d.meetings+","+d.cancelled }
