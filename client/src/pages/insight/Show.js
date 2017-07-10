@@ -5,6 +5,8 @@ import Breadcrumbs from 'components/Breadcrumbs'
 
 import API from 'api'
 
+import SearchBar from 'components/SearchBar'
+
 
 var d3 = null/* required later */
 
@@ -38,8 +40,22 @@ export default class InsightShow extends Page {
 		}
 	}
 
+	previousSearchFunction = SearchBar.self.onSubmit
+
 	componentDidMount() {
 		super.componentDidMount()
+
+		//@vassil, ugly hack to highjack the search bar from insight page
+		SearchBar.self.onSubmit = event =>
+		{
+			API.query(
+				this.constructQuery(SearchBar.self.state.query) , null, '')
+				.then(data => {
+				this.setState({ graphData: data })
+				this.forceUpdate()
+			})
+
+		}
 
 		if (d3) {
 			return
@@ -51,48 +67,72 @@ export default class InsightShow extends Page {
 		})
 	}
 
-	fetchData(props) {
-		API.query(/* GraphQL */`
-			personList(f:getAll, pageNum:0, pageSize:10000)
-		  {
-		    list
-		    {
-		    id, name, role, attendedReports(pageSize:1000, pageNum:0)
-          {
-            totalCount
-          }
-		    }
-		  }
 
-		  reportList(f:getAll, pageNum:0, pageSize:10000)
+	componentWillUnmount() {
+		SearchBar.self.onSubmit = this.previousSearchFunction
+	}
+
+
+	constructQuery(text)
+	{
+		/* GraphQL */
+		let query = `personList(f:getAll, pageNum:0, pageSize:10000)
+		  	{
+		    	list
+		    	{
+		    		id, name, role, attendedReports(pageSize:1000, pageNum:0)
+          				{
+            			totalCount
+          				}
+		    	}
+		  	} 
+			 reportList(`
+		if (!text || text==="")
+			query += "f:getAll"
+		else
+			query += "f:search, query:{text:\"" + text + "\"}"
+		query += `, pageNum:0, pageSize:1000)
 			{
 			 	list
 			 	{
 					id, state, intent, cancelledReason
-          attendees
+        			attendees
 					{
-            id
-          }
+            			id
+          			}
 				}
-		  }
-		`, null, '')
+		  	}
+		`
+	return query;
+	}
+
+
+	fetchData(props) {
+		API.query(
+			this.constructQuery() , null, '')
 			.then(data => {
 				this.setState({ graphData: data })
 			})
 
 	}
 
+
+	
+
+
 	componentDidUpdate() {
 
-		let state = this.state;
+		let state = this.state
 		if (!state.graphData || !d3 || !state.graphData.personList) {
 			return
 		}
 
-		let nodes = state.graphData.personList.list;
+		let nodes = state.graphData.personList.list
+		let links = []
 		let linksTable = [];
-		let links = [];
-		this.state.graphData.reportList.list.forEach(function (report, reporti) {
+
+		
+		this.state.graphData.reportList.list.forEach( (report, reporti) => {
 			for (let i = 0; i < report.attendees.length; i++) {
 				for (let j = i + 1; j < report.attendees.length; j++) {
 
@@ -106,7 +146,8 @@ export default class InsightShow extends Page {
 							target: report.attendees[j].id,
 							meetings: 0,
 							cancelled: 0
-						};
+						}
+						console.log( link.source + " -> " + link.target);
 						links.push(link);
 						linksTable["" + report.attendees[i].id + "," + report.attendees[j].id] = links.length-1;
 						linkId = links.length-1;
@@ -116,55 +157,71 @@ export default class InsightShow extends Page {
 					let link = links[linkId]
 
 					if (report.cancelledReason === null)
-						link.meetings = link.meetings + 1;
+						link.meetings = link.meetings + 1
 					else
-						link.cancelled = link.cancelled + 1;
+						link.cancelled = link.cancelled + 1
 
 				}
 			}
-		});
+		})
 
 		let svg = d3.select(this.svgElement),
-			margin = { top: 0, right: 0, bottom: 0, left: 0 },
-			width = this.svgElement.clientWidth - margin.left - margin.right,
-			height = this.svgElement.clientHeight - margin.top - margin.bottom
+			margin = { top: 0, right: 0, bottom: 0, left: 0 }
 
-		let link = svg.selectAll("line")
+		let width = this.svgElement.clientWidth - margin.left - margin.right
+		let height = this.svgElement.clientHeight - margin.top - margin.bottom
+
+		this.link = svg.selectAll("line")
 			.data(links)
-			.enter().append("line")
+
+		this.link.enter().append("line")
 			.style("stroke", "black")
 			.style("stroke-width",state.linkWidth)
 
-		let node = svg.selectAll("g.node")
-			.data(nodes)
-			.enter().append("g").attr("class","node")
+		this.link.exit().remove()
 
-		node.append("circle")
+		this.node = svg.selectAll("g.node")
+			.data(nodes,d => {return  d.id})
+			
+		let nodeEnter = this.node.enter().append("g").attr("class","node")
+		
+		nodeEnter.append("circle")
 			.attr("r", state.radius)
 			.style("fill", function (d) { let col = state.nodeColor(d); col.opacity = 0.2; return col })
 			.style("stroke-width", "2px")
 			.style("stroke", state.nodeColor)
 
-		node.append("svg:text").text(function (d, i) {
+		nodeEnter.append("svg:text").text(function (d, i) {
 			return d.name
 		}).style("fill", "#555").style("font-family", "Arial").style("font-size", 10).attr("y", function (d) { return 9 + state.radius(d) })
 
-		var force = d3.forceSimulation(nodes)
-			.force("charge", d3.forceManyBody().strength(-100))
-			.force("link", d3.forceLink(links).id(d => {return d.id}).strength(function(d){return d.meetings/13}))
-			.force("center", d3.forceCenter(width / 2, height / 2))
-			.force("collide", d3.forceCollide(state.radius).strength(.1))
-			.on("tick", tick)
+		this.node.exit().remove()
 
-		function tick() {
-			node.attr("transform", function (d) {
+
+
+		if (!this.force)
+		{
+			this.force = d3.forceSimulation()
+			.force("charge", d3.forceManyBody().strength(-30))
+			.force("link", d3.forceLink().id(function(d){return d.id}).strength(function(d){return d.meetings/13}))
+			.force("center", d3.forceCenter(width / 2, height / 2))
+			.on("tick", () => {
+			this.link.attr("x1", function (d) {return d.source.x })
+				.attr("y1", function (d) { return d.source.y })
+				.attr("x2", function (d) { return d.target.x })
+				.attr("y2", function (d) { return d.target.y })
+			this.node.attr("transform", (d) => {
 				return "translate(" + Math.max(state.radius(d), Math.min(width - state.radius(d), d.x)) + "," + Math.max(state.radius(d), Math.min(height - state.radius(d), d.y)) + ")";
-			});
-			link.attr("x1", function (d) { return d.source.x; })
-				.attr("y1", function (d) { return d.source.y; })
-				.attr("x2", function (d) { return d.target.x; })
-				.attr("y2", function (d) { return d.target.y; });
+			})
+		})
 		}
+
+		this.force.nodes(nodes)
+			.alpha(1)
+			.alphaMin(.5)
+			.force("link").links(links)
+	
+		this.force.restart()
 	}
 
 	render() {
