@@ -2,7 +2,7 @@ import FileSaver from 'file-saver'
 import moment from 'moment'
 import GQL from 'graphqlapi'
 
-let identity = function(field) { return field }
+let identity = function(field) { return field.replace(/[A-Za-z0-9 _.,!"'/$]/g, "") }
 
 export class CSVExport {
 
@@ -28,7 +28,7 @@ export class CSVExport {
 			location: (field) => {return field.name},
 			attendees: (field) => {return field.map(function (item) {return item.name}).join(", ")},
 			poams: (field) => {return field.map(function (item) {return item.shortName}).join(", ")},
-			comments: (field) => {return field.map(function (item) {return  item.author + ": " + item.text}).join(",/n ")},
+			comments: (field) => {return field.map(function (item) {return  item.author + ": " + identity(item.text)}).join(",/n ")},
 			reportText: identity,
 		}
 	}
