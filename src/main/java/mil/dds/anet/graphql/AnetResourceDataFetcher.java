@@ -1,5 +1,6 @@
 package mil.dds.anet.graphql;
 
+import java.lang.invoke.MethodHandles;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
@@ -15,6 +16,9 @@ import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response.Status;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
@@ -34,6 +38,8 @@ import mil.dds.anet.utils.GraphQLUtils;
  * to serve as data fetchers for the top level objects in queries. 
  */
 public class AnetResourceDataFetcher implements DataFetcher {
+
+	private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
 	//given a set of arguments which method to call. 
 	Map<String,Method> fetchers;
@@ -85,7 +91,7 @@ public class AnetResourceDataFetcher implements DataFetcher {
 							.build();
 						arguments.put(argName, gqlArg);
 					} else { 
-						System.err.println("Unbound arg " + param.toString() + " on method" + m.getName());
+						logger.error("Unbound arg {} on method {}", param.toString(), m.getName());
 					}
 				}
 				validMethods.add(m);
@@ -198,18 +204,14 @@ public class AnetResourceDataFetcher implements DataFetcher {
 				}
 			}
 			
-			//Verify the types are correct. (ignore primitives) 
-			if ((!param.getType().isPrimitive()) && param.getType().isAssignableFrom(arg.getClass()) == false) {
-				//If the argument passed was a Map, but we need a bean, try to convert it? 
-				if (Map.class.isAssignableFrom(arg.getClass())) {
-					try { 
-						arg = mapper.convertValue(arg, param.getType());
-					} catch (IllegalArgumentException e) {
-						throw new WebApplicationException("Unable to convert Map into " + param.getType() + ": " + e.getMessage(), e);
-					}
-				} else {
-					System.out.println("c: Arg is " + arg.getClass() + " and param is " + param.getType());
-					throw new WebApplicationException(String.format("Type mismatch on arg, wanted %s got %s on %s", 
+			//Verify the types are correct.
+			if (!param.getType().isAssignableFrom(arg.getClass())) {
+				//Try to convert it
+				try {
+					arg = mapper.convertValue(arg, param.getType());
+				} catch (IllegalArgumentException e) {
+					logger.error("c: Arg is {} and param is {}", arg.getClass(), param.getType());
+					throw new WebApplicationException(String.format("Type mismatch on arg, wanted %s got %s on %s",
 							param.getType(), arg.getClass(), method.getName()));
 				}
 			}
