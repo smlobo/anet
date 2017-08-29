@@ -16,6 +16,7 @@ apply plugin: 'checkstyle'
 apply plugin: 'org.kordamp.markdown.convert'
 apply plugin: 'com.bmuschko.docker-java-application'
 apply plugin: "se.bjurr.gitchangelog.git-changelog-gradle-plugin"
+apply plugin: 'com.moowork.node'
 
 apply from: 'localSettings.gradle'
 
@@ -83,6 +84,12 @@ test.environment = run.environment
 
 run.args = ["server","anet.yml"]
 
+
+task buildClient(type: NpmTask) {
+	outputs.upToDateWhen { false };
+	args = ['run', 'build']
+}
+
 task dbStatus(dependsOn: 'compileJava', type: JavaExec) {
 	classpath = sourceSets.main.runtimeClasspath
 	environment(run.environment)
@@ -134,13 +141,7 @@ task dockerCreateDB(dependsOn: dockerPullDB, type: com.bmuschko.gradle.docker.ta
 	imageId = dockerPullDB.getImageId()
 	containerName = "anet-mssql-server"
 	description = "Creates an ANET MS SQL DB container named " + containerName
-	binds = ["${projectDir}":"/hostdata"]
-	if (project.hasProperty("mounts")) {
-		project.properties["mounts"].tokenize(",").each {
-			def (source, target) = it.split(":")
-			binds[source] = target
-		}
-	}
+	binds = ["${projectDir}":"/hostdata"] + run.environment.get("DOCKER_MOUNTS", [:])
 	env = ["ACCEPT_EULA=Y","SA_PASSWORD="+run.environment["ANET_SA_PASSWORD"],"DB_NAME="+run.environment["ANET_DB_NAME"],"DB_USER="+run.environment["ANET_DB_USERNAME"],"DB_USER_PASSWORD="+run.environment["ANET_DB_PASSWORD"]]
 	portBindings = ["1433:"+run.environment["ANET_DB_PORT"]]
 }
@@ -165,6 +166,9 @@ task changelog (type: se.bjurr.gitchangelog.plugin.gradle.GitChangelogTask) {
 	file = new File("${buildDir}/resources/main/assets/client/changelog.html");
 	templateContent = file('docs/changelog.mustache').getText('UTF-8');
 }
+
+jar.dependsOn buildClient
+jar.dependsOn changelog
 
 //Configure the Java Checkstyle settings. Run with ./gradlew check
 checkstyle {
@@ -198,6 +202,7 @@ buildscript {
 		classpath "org.kordamp:markdown-gradle-plugin:1.1.0"
 		classpath 'com.bmuschko:gradle-docker-plugin:3.0.12'
 		classpath "gradle.plugin.se.bjurr.gitchangelog:git-changelog-gradle-plugin:1.50"
+		classpath "com.moowork.gradle:gradle-node-plugin:1.2.0"
 	}
 }
 
@@ -227,3 +232,7 @@ allprojects {
 	markdownToHtml.hardwraps = true
 }
 
+node {
+
+	nodeModulesDir = file("${project.projectDir}/client")
+}
