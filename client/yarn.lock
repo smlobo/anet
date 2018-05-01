@@ -8240,6 +8240,12 @@ react-autowhatever@^10.1.0:
     react-themeable "^1.1.0"
     section-iterator "^2.0.0"
 
+react-avatar-editor@^11.0.2:
+  version "11.0.2"
+  resolved "https://registry.yarnpkg.com/react-avatar-editor/-/react-avatar-editor-11.0.2.tgz#d28fe7a79088676ee71bd0ee5a6d215d06c611dd"
+  dependencies:
+    prop-types "^15.5.8"
+
 react-bootstrap@^0.31.0, react-bootstrap@^0.31.5:
   version "0.31.5"
   resolved "https://registry.yarnpkg.com/react-bootstrap/-/react-bootstrap-0.31.5.tgz#57040fa8b1274e1e074803c21a1b895fdabea05a"
@@ -9383,14 +9389,6 @@ source-map@^0.4.4:
 source-map@^0.6.0, source-map@^0.6.1, source-map@~0.6.1:
   version "0.6.1"
   resolved "https://registry.yarnpkg.com/source-map/-/source-map-0.6.1.tgz#74722af32e9614e9c287a8d0bbde48b5e2f1a263"
-
-sourcemap-lookup@^0.0.3:
-  version "0.0.3"
-  resolved "https://registry.yarnpkg.com/sourcemap-lookup/-/sourcemap-lookup-0.0.3.tgz#2dd4599206929ddece73754ae3e234e5e9f98bea"
-  dependencies:
-    colors "^1.1.2"
-    minimist "^1.2.0"
-    source-map "^0.5.3"
 
 spdx-correct@^3.0.0:
   version "3.0.0"

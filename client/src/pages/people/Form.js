@@ -11,6 +11,7 @@ import Messages from 'components/Messages'
 import TextEditor from 'components/TextEditor'
 import ButtonToggleGroup from 'components/ButtonToggleGroup'
 import OptionListModal from 'components/OptionListModal'
+import AvatarComponent from 'components/AvatarComponent'
 
 import API from 'api'
 import Settings from 'Settings'
@@ -243,6 +244,7 @@ class PersonForm extends ValidatableFormWrapper {
 			</Fieldset>
 
 			<Fieldset title="Additional information">
+				<AvatarComponent />
 				<RequiredField id="emailAddress" label="Email" required={isAdvisor}
 					humanName="Valid email address"
 					type="email"
