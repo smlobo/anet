@@ -6,7 +6,7 @@ const API = {
 		params.credentials = 'same-origin'
 
 		params.headers = params.headers || {}
-		params.headers.Accept = accept || 'application/json'
+		params.headers.Accept = accept || '*/*'
 		const authHeader = API.getAuthHeader()
 		if (authHeader) {
 			params.headers[authHeader[0]] = authHeader[1]
@@ -51,12 +51,27 @@ const API = {
 		params = params || {}
 		params.disableSubmits = typeof params.disableSubmits === 'undefined' ? true : params.disableSubmits
 		params.method = params.method || 'POST'
-		params.body = JSON.stringify(data)
+		params.body = data
+		params.headers = params.headers || {}
 
+		return API.fetch(url, params)
+	},
+
+	sendJSON(url, data, params) {
+		// Send data as JSON 
+		const jsonData = JSON.stringify(data)
 		params.headers = params.headers || {}
 		params.headers['Content-Type'] = 'application/json'
 
-		return API.fetch(url, params)
+		API.send(url, jsonData, params)
+	},
+	
+	sendFile(url, data, params) {
+		// send data as form data
+		const formData = new FormData()
+		Object.keys(data).forEach(key => formData.append(key, data[key]))
+
+		return API.send(url, formData, params)
 	},
 
 	_queryCommon(query, variables, variableDef, output) {

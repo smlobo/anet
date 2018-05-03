@@ -1,11 +1,19 @@
 package mil.dds.anet.resources;
 
+import io.dropwizard.auth.Auth;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -19,9 +27,9 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import com.codahale.metrics.annotation.Timed;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.glassfish.jersey.media.multipart.FormDataParam;
 
-import io.dropwizard.auth.Auth;
 import mil.dds.anet.AnetObjectEngine;
 import mil.dds.anet.beans.Person;
 import mil.dds.anet.beans.Person.PersonStatus;
@@ -40,11 +48,16 @@ import mil.dds.anet.utils.AuthUtils;
 import mil.dds.anet.utils.ResponseUtils;
 import mil.dds.anet.utils.Utils;
 
+import com.codahale.metrics.annotation.Timed;
+
+
 @Path("/api/people")
 @Produces(MediaType.APPLICATION_JSON)
 @PermitAll
 public class PersonResource implements IGraphQLResource {
-	
+
+	private static final String SERVER_UPLOAD_LOCATION_FOLDER = "/files/mara/";
+
 	private PersonDao dao;
 	private AnetConfiguration config;
 	
@@ -375,5 +388,33 @@ public class PersonResource implements IGraphQLResource {
 		final String messageBody = "Only valid email domain names are allowed. If your email domain name is not in the list, please contact the support team";
 		final String errorMessage = Utils.isEmptyOrNull(supportEmailAddr) ? messageBody : String.format("%s at %s", messageBody, supportEmailAddr);
 		return errorMessage;
+	}
+
+	@POST
+	@Path("/uploadImage")
+	@Consumes({MediaType.MULTIPART_FORM_DATA})
+	public Response uploadFile(@FormDataParam("photo") InputStream fileInputStream,
+								  @FormDataParam("photo") FormDataContentDisposition fileMetaData) throws Exception
+	{
+		AnetAuditLogger.log("fileInputStream {}", fileInputStream);
+		AnetAuditLogger.log("fileMetaData {}", fileMetaData);
+		String UPLOAD_PATH = "/tmp/";
+//		try
+//		{
+			int read = 0;
+			byte[] bytes = new byte[1024];
+
+			OutputStream out = new FileOutputStream(new File(UPLOAD_PATH + fileMetaData.getFileName()));
+			while ((read = fileInputStream.read(bytes)) != -1)
+			{
+				out.write(bytes, 0, read);
+			}
+			out.flush();
+			out.close();
+//		} catch (IOException e)
+//		{
+//			throw new WebApplicationException("Error while uploading file. Please try again !!");
+//		}
+		return Response.ok("Data uploaded successfully !!").build();
 	}
 }

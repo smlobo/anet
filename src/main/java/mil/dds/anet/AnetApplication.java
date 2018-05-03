@@ -20,11 +20,14 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.everit.json.schema.Schema;
 import org.everit.json.schema.ValidationException;
 import org.everit.json.schema.loader.SchemaLoader;
+import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 import org.json.JSONObject;
 import org.json.JSONTokener;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+
 import org.skife.jdbi.v2.DBI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -184,6 +187,8 @@ public class AnetApplication extends Application<AnetConfiguration> {
 		//If you want to use @RolesAllowed to do authorization.
 		environment.jersey().register(RolesAllowedDynamicFeature.class);
 		environment.jersey().register(new WebExceptionMapper());
+		environment.jersey().register(new WebExceptionMapper());
+		environment.jersey().register(MultiPartFeature.class);
 
 		//Schedule any tasks that need to run on an ongoing basis. 
 		ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);

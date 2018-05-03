@@ -1,8 +1,13 @@
+import PropTypes from 'prop-types'
 import React from 'react'
 import ReactDOM from 'react-dom'
 import AvatarEditor from 'react-avatar-editor'
 
 export default class AvatarComponent extends React.Component {
+	static propTypes = {
+		onChange: PropTypes.func,
+	}
+
   state = {
     image: 'avatar.jpg',
     position: { x: 0.5, y: 0.5 },
@@ -16,6 +21,7 @@ export default class AvatarComponent extends React.Component {
 
   handleNewImage = e => {
     this.setState({ image: e.target.files[0] })
+    this.props.onChange(e.target.files[0])
   }
 
   handleSave = data => {
@@ -100,7 +106,7 @@ export default class AvatarComponent extends React.Component {
         </div>
         <br />
         New File:
-        <input name="newImage" type="file" onChange={this.handleNewImage} />
+        <input name="photo" type="file" onChange={this.handleNewImage} />
         <br />
         Zoom:
         <input

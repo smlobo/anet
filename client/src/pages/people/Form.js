@@ -220,7 +220,7 @@ class PersonForm extends ValidatableFormWrapper {
 					person.isNewUser() ?
 						<Form.Field type="static" id="status" value="New user" />
 						:
-						<Form.Field id="status" >
+						<Form.Field id="status">
 							<ButtonToggleGroup>
 								<Button id="statusActiveButton" value={ Person.STATUS.ACTIVE }>Active</Button>
 								<Button id="statusInactiveButton" value={ Person.STATUS.INACTIVE }>Inactive</Button>
@@ -244,7 +244,9 @@ class PersonForm extends ValidatableFormWrapper {
 			</Fieldset>
 
 			<Fieldset title="Additional information">
-				<AvatarComponent />
+				<Form.Field id="photo" label="Photo">
+					<AvatarComponent />
+				</Form.Field>
 				<RequiredField id="emailAddress" label="Email" required={isAdvisor}
 					humanName="Valid email address"
 					type="email"
@@ -342,7 +344,8 @@ class PersonForm extends ValidatableFormWrapper {
 			isFirstTimeUser = true
 			person.status = Person.STATUS.ACTIVE
 		}
-		this.updatePerson(person, edit, isFirstTimeUser)
+//		this.updatePerson(person, edit, isFirstTimeUser)
+		this.uploadPhoto(person, edit, isFirstTimeUser)
 	}
 
 	@autobind
@@ -377,6 +380,24 @@ class PersonForm extends ValidatableFormWrapper {
 							success: 'Person saved successfully',
 						}
 					})
+				}
+			}).catch(error => {
+				this.setState({error: error})
+				window.scrollTo(0, 0)
+			})
+	}
+
+	@autobind
+	uploadPhoto(person, edit, isNew) {
+		// Clean up person object for JSON response
+		person = Object.without(person, 'firstName', 'lastName')
+		let url = `/api/people/uploadImage`
+		this.setState({isBlocking: false})
+		this.forceUpdate()
+		API.sendFile(url, person, {disableSubmits: true})
+			.then(response => {
+				if (response.code) {
+					throw response.code
 				}
 			}).catch(error => {
 				this.setState({error: error})

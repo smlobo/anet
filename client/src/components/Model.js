@@ -93,6 +93,7 @@ export default class Model {
 	}
 
 	setState(props) {
+		console.log('model props', props)
 		Object.forEach(props, (key, value) => {
 			if (value !== null)
 				this[key] = value
