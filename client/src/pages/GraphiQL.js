@@ -1,49 +1,60 @@
 import React from 'react'
 import Page, {mapDispatchToProps, propTypes as pagePropTypes} from 'components/Page'
 
-import Breadcrumbs from 'components/Breadcrumbs'
-
-import { PAGE_PROPS_NO_NAV, CLEAR_SEARCH_PROPS } from 'actions'
 import { connect } from 'react-redux'
-
-var GraphiQLreq = null/* required later */
+import MosaicLayout from 'components/MosaicLayout'
+import GraphiQLVisualizaion from 'visualizations/GraphiQL'
+import MapVisualization from 'visualizations/Map'
+import Vega from 'visualizations/Vega'
+import {SimpleBarChart} from 'visualizations/specs'
+import { DEFAULT_PAGE_PROPS } from 'actions'
 
 class GraphiQL extends Page {
 
 	static propTypes = {...pagePropTypes}
 
 	constructor(props) {
-		super(props, PAGE_PROPS_NO_NAV, CLEAR_SEARCH_PROPS)
+ 			super(props, DEFAULT_PAGE_PROPS, Object.assign({}, 	{onSearchGoToSearchPage: false}))
 	}
 
-	componentDidMount() {
-		if (GraphiQLreq) {
-			return
+	getData = () =>
+	{
+		return {
+		  table: [
+			{category: "A", amount: 28},
+			{category: "B", amount: 55},
+			{category: "C", amount: 43},
+			{category: "D", amount: 91},
+			{category: "E", amount: 81},
+			{category: "F", amount: 53},
+			{category: "G", amount: 19},
+			{category: "H", amount: 87}
+		  ]
 		}
-
-		import('graphiql').then(importedModule => {
-			GraphiQLreq = importedModule.default
-			require('graphiql/graphiql.css')
-			this.forceUpdate()
-		})
-	}
-
-	fetch(params) {
-		return fetch('/graphql', {
-			credentials: 'same-origin',
-			method: 'POST',
-			headers: {'Content-Type': 'application/json', Accept: 'application/json'},
-			body: JSON.stringify(params),
-		}).then(response => response.json())
 	}
 
 	render() {
-		// TODO: fix the below hack with inlined height after layout refactoring in NCI-Agency/anet#551
-		return <div style={{height:'600px'}}>
-			<Breadcrumbs items={[['Run GraphQL queries', '/graphiql']]} />
-			{GraphiQLreq ? <GraphiQLreq fetcher={this.fetch} /> : 'Loading...'}
-		</div>
+		const chartQueryParams = {}
+		Object.assign(chartQueryParams, this.getSearchQuery())
+		Object.assign(chartQueryParams, {
+		  pageNum: 0,
+		  pageSize: 0,  // retrieve all the filtered reports
+		})
+
+	const visualizations = [
+		GraphiQLVisualizaion(chartQueryParams),
+		MapVisualization(this.getData),
+		Vega(this.getData,SimpleBarChart)]
+
+
+	return <MosaicLayout style={{display: 'flex', flexDirection: 'column', height: '100%', flex: 1}}
+		visualizations={visualizations}
+		initialNode={visualizations[0].id}/>
 	}
 }
 
-export default connect(null, mapDispatchToProps)(GraphiQL)
+const mapStateToProps = (state, ownProps) => ({
+	searchQuery: state.searchQuery
+})
+
+export default connect(mapStateToProps, mapDispatchToProps)(GraphiQL)

@@ -106,7 +106,9 @@
     "react-tag-input": "^5.2.3",
     "react-toastify": "^4.4.0",
     "react-ultimate-pagination": "^1.2.0",
+    "react-vega": "^4.0.2",
     "redux": "^4.0.1",
+    "vega-lib": "^4.3.0",
     "whatwg-fetch": "^2.0.3"
   },
   "scripts": {
