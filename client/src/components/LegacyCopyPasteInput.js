@@ -20,9 +20,7 @@ class LegacyCopyPasteInput extends Component {
 	}
 
 	handleBeforePaste = (e) => {
-		if (true) {
-			this.focusIeClipboardDiv()
-		}
+		this.focusIeClipboardDiv()
 	}
 
 	componentDidMount() {
