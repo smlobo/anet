@@ -54,11 +54,13 @@ class LegacyCopyPasteInput extends Component {
 	}
 
 	render() {
-		return <div
-				id="legacy-clipboard-contenteditable"
-				className="legacyCopyPasteInput-hidden"
-				ref={this.legacyCopyPasteInputRef}
-				contentEditable />
+		return (isIe === false)
+			? ""
+			:	<div
+					id="legacy-clipboard-contenteditable"
+					className="legacyCopyPasteInput-hidden"
+					ref={this.legacyCopyPasteInputRef}
+					contentEditable />
 	}
 }
 
