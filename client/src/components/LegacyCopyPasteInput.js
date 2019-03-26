@@ -39,12 +39,11 @@ class LegacyCopyPasteInput extends Component {
 	// For IE, we can get/set Text or URL just as we normally would, but to get HTML, we need to let the browser perform the copy or paste
 	// in a contenteditable div.
 	handlePaste = () => {
-		const clipboardData = window.clipboardData
-		const clipboardText = clipboardData.getData('Text')
+		const { handlePastedHTML } = this.props
 		document.getElementById("legacy-clipboard-contenteditable").innerHTML = ""
 		setTimeout(function() {
-			console.log('Clipboard Plain Text: ' + clipboardText)
-			console.log('Clipboard HTML: ' + document.getElementById("legacy-clipboard-contenteditable").innerHTML)
+			// console.log('Clipboard HTML: ' + document.getElementById("legacy-clipboard-contenteditable").innerHTML)
+			handlePastedHTML(document.getElementById("legacy-clipboard-contenteditable").innerHTML)
 			document.getElementById("legacy-clipboard-contenteditable").innerHTML = ""
 		}, 0)
 
