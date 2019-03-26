@@ -170,7 +170,7 @@ class RichTextEditor extends Component {
 						ref="editor"
 						spellCheck
 					/>
-					<LegacyCopyPasteInput handlePastedHTML={this.setEditorStateFromHTML} />
+					<LegacyCopyPasteInput handlePastedHTML={(html) => this.setEditorStateFromHTML(html)} />
 				</div>
 			</div>
 		)
