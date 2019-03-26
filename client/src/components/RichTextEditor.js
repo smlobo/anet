@@ -3,6 +3,8 @@ import PropTypes from 'prop-types'
 import classNames from 'classnames'
 import {ContentState, CompositeDecorator, Editor, EditorState, RichUtils, convertFromHTML, getDefaultKeyBinding } from 'draft-js'
 import { convertToHTML } from 'draft-convert'
+import LegacyCopyPasteInput from 'components/LegacyCopyPasteInput'
+
 import 'draft-js/dist/Draft.css'
 import './RichTextEditor.css'
 
@@ -170,7 +172,7 @@ class RichTextEditor extends Component {
 					<Editor
 						blockStyleFn={getBlockStyle}
 						editorState={editorState}
-						handlePastedText={this.handlePastedText}
+						//handlePastedText={this.handlePastedText}
 						handleKeyCommand={this.handleKeyCommand}
 						keyBindingFn={this.mapKeyToEditorCommand}
 						onChange={this.onChange}
@@ -179,6 +181,7 @@ class RichTextEditor extends Component {
 						ref="editor"
 						spellCheck
 					/>
+					<LegacyCopyPasteInput handlePastedHTML={this.setEditorStateFromHTML} />
 				</div>
 			</div>
 		)
