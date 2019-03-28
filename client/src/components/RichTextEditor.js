@@ -1,9 +1,10 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import classNames from 'classnames'
-import {ContentState, CompositeDecorator, Editor, EditorState, RichUtils, convertFromHTML, getDefaultKeyBinding } from 'draft-js'
-import { convertToHTML } from 'draft-convert'
+import {ContentState, CompositeDecorator, Editor, EditorState, Modifier, RichUtils, convertFromHTML, getDefaultKeyBinding } from 'draft-js'
+import { convertToHTML, convertFromHTML as convertPaste } from 'draft-convert'
 import LegacyCopyPasteInput from 'components/LegacyCopyPasteInput'
+import _isEmpty from 'lodash/isEmpty'
 
 import 'draft-js/dist/Draft.css'
 import './RichTextEditor.css'
@@ -32,18 +33,20 @@ class RichTextEditor extends Component {
 		}
 		this.handleOnChangeHTML = this._handleOnChangeHTML.bind(this)
 		this.handleKeyCommand = this._handleKeyCommand.bind(this)
+		this.handlePastedText = this._handlePastedText.bind(this)
 		this.mapKeyToEditorCommand = this._mapKeyToEditorCommand.bind(this)
 		this.toggleBlockType = this._toggleBlockType.bind(this)
 		this.toggleInlineStyle = this._toggleInlineStyle.bind(this)
-		this.setEditorStateFromHTML = this._setEditorStateFromHTML.bind(this)
+		this.pushEditorStateWithHtml = this._pushEditorStateWithHtml.bind(this)
 		this.initializeEditorState = this._initializeEditorState.bind(this)
 
 		this.focus = () => this.refs.editor.focus()
-		this.onChange = (editorState) => this.setState({editorState}, this.handleOnChangeHTML)
+		this.onChange = (editorState) => this.setState({editorState}, this.handleOnChangeHTML(editorState))
 	}
 
 	componentDidUpdate() {
-		this.initializeEditorState()
+		// WIP Double Check why this is not needed
+		//this.initializeEditorState()
 	}
 
 	componentDidMount() {
@@ -51,16 +54,15 @@ class RichTextEditor extends Component {
 	}
 
 	_initializeEditorState() {
-		const { isLoaded } = this.state
+		const { isLoaded, editorState } = this.state
 		const { value } = this.props
 		const valueString = value || ''
 		if (!isLoaded && valueString.length > 0) {
-			this.setState({isLoaded: true}, this.setEditorStateFromHTML(value))
+			this.setState({isLoaded: true}, this.onChange(this.pushEditorStateWithHtml(valueString, editorState)))
 		}
 	}
 
-	_handleOnChangeHTML() {
-		const { editorState } = this.state
+	_handleOnChangeHTML(editorState) {
 		const html = convertToHTML({
 			entityToHTML: (entity, originalText) => {
 				if (entity.type === 'IMAGE') {
@@ -70,27 +72,20 @@ class RichTextEditor extends Component {
 				return originalText
 			}
 		})(editorState.getCurrentContent())
+		console.log(html)
 		this.props.onChange(html)
 	}
 
-	pushEditorState = (contentState) => {
-		const editorState = EditorState.push(this.state.editorState, contentState, 'change-block-data')
-		this.onChange(editorState)
-	}
 
-	setEditorStateFromText(text) {
-		const contentState = ContentState.createFromText(text)
-		this.pushEditorState(contentState)
-	}
 
-	_setEditorStateFromHTML(html) {
+	_pushEditorStateWithHtml(html, editorState) {
 		const blocksFromHTML = convertFromHTML(html)
 		if (blocksFromHTML.contentBlocks === null) { return }
 		const contentState = ContentState.createFromBlockArray(
 			blocksFromHTML.contentBlocks,
 			blocksFromHTML.entityMap,
 		)
-		this.pushEditorState(contentState)
+		return EditorState.push(editorState, contentState, 'insert-fragment')
 	}
 
 	_handleKeyCommand(command, editorState) {
@@ -135,6 +130,18 @@ class RichTextEditor extends Component {
 		)
 	}
 
+	_handlePastedText(text, html, editorState) {
+		const htmlRegex = new RegExp(/<[a-z][\s\S]*>/i)
+		console.log('html', html)
+		if(text === "LEGACY-CLIPBOARD" && htmlRegex.test(html)) {
+			const blocksFromHTML = convertPaste(html, {flat: true})
+			const newState = Modifier.replaceWithFragment(editorState.getCurrentContent(), editorState.getSelection(), blocksFromHTML.getBlockMap())
+			this.onChange(EditorState.push(editorState, newState, 'insert-fragment'))
+			return true	
+		}
+		return false
+	}
+
 	render() {
 		const {editorState} = this.state
 
@@ -158,11 +165,12 @@ class RichTextEditor extends Component {
 					editorState={editorState}
 					onToggle={this.toggleInlineStyle}
 				/>
-				<div className={className} onClick={this.focus}>
+				<div id="RichEditor-content-root" className={className} onClick={this.focus}>
 					<Editor
 						blockStyleFn={getBlockStyle}
 						editorState={editorState}
 						handleKeyCommand={this.handleKeyCommand}
+						handlePastedText={this.handlePastedText}
 						keyBindingFn={this.mapKeyToEditorCommand}
 						onChange={this.onChange}
 						onBlur={this.props.onHandleBlur}
@@ -170,7 +178,7 @@ class RichTextEditor extends Component {
 						ref="editor"
 						spellCheck
 					/>
-					<LegacyCopyPasteInput handlePastedHTML={(html) => this.setEditorStateFromHTML(html)} />
+					<LegacyCopyPasteInput handlePastedHTML={(text, html) => this.handlePastedText(text, html, editorState)} />
 				</div>
 			</div>
 		)
