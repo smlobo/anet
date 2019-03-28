@@ -1,4 +1,6 @@
 import React, { Component } from 'react'
+import _isEmpty from 'lodash/isEmpty'
+
 import './legacyCopyPasteInput.css'
 
 const isIe = (navigator.userAgent.toLowerCase().indexOf("msie") !== -1 || navigator.userAgent.toLowerCase().indexOf("trident") !== -1)
@@ -40,13 +42,16 @@ class LegacyCopyPasteInput extends Component {
 	// in a contenteditable div.
 	handlePaste = () => {
 		const { handlePastedHTML } = this.props
+		const plainText = window.clipboardData.getData('Text')
 		document.getElementById("legacy-clipboard-contenteditable").innerHTML = ""
 		setTimeout(function() {
-			// console.log('Clipboard HTML: ' + document.getElementById("legacy-clipboard-contenteditable").innerHTML)
-			handlePastedHTML(document.getElementById("legacy-clipboard-contenteditable").innerHTML)
+			const clipboardHtml = document.getElementById("legacy-clipboard-contenteditable").innerHTML
+			const textValue = _isEmpty(clipboardHtml) ? plainText : "LEGACY-CLIPBOARD"
+			console.log('Clipboard HTML: ' + clipboardHtml)
+			handlePastedHTML(textValue, document.getElementById("legacy-clipboard-contenteditable").innerHTML)
 			document.getElementById("legacy-clipboard-contenteditable").innerHTML = ""
 		}, 0)
-
+		document.getElementById("RichEditor-content-root").click()
 		return isIe
 	}
 
