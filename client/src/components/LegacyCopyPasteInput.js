@@ -1,6 +1,5 @@
-import React, { Component } from "react"
 import _isEmpty from "lodash/isEmpty"
-
+import React, { Component } from "react"
 import "./legacyCopyPasteInput.css"
 
 const isIe =

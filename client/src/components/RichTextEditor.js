@@ -1,21 +1,19 @@
-import React, { Component } from "react"
-import PropTypes from "prop-types"
 import classNames from "classnames"
+import LegacyCopyPasteInput from "components/LegacyCopyPasteInput"
+import { convertFromHTML as convertPaste, convertToHTML } from "draft-convert"
 import {
-  ContentState,
   CompositeDecorator,
+  ContentState,
+  convertFromHTML,
   Editor,
   EditorState,
+  getDefaultKeyBinding,
   Modifier,
-  RichUtils,
-  convertFromHTML,
-  getDefaultKeyBinding
+  RichUtils
 } from "draft-js"
-import { convertToHTML, convertFromHTML as convertPaste } from "draft-convert"
-import LegacyCopyPasteInput from "components/LegacyCopyPasteInput"
-import _isEmpty from "lodash/isEmpty"
-
 import "draft-js/dist/Draft.css"
+import PropTypes from "prop-types"
+import React, { Component } from "react"
 import "./RichTextEditor.css"
 
 class RichTextEditor extends Component {
