@@ -26,6 +26,7 @@ import {
   Radio
 } from "react-bootstrap"
 import { withRouter } from "react-router-dom"
+import Avatar from 'react-avatar';
 
 class BasePersonForm extends Component {
   static propTypes = {
@@ -110,8 +111,20 @@ class BasePersonForm extends Component {
     onSaveRedirectToHome: Person.isNewUser(this.props.initialValues) // redirect first time users to the homepage in order to be able to use onboarding
   }
 
+  getUserImage(personUuid) {
+    console.log("FOrm uuid: " + personUuid)
+    return "https://res.cloudinary.com/dpeirxvfn/image/upload/" + 
+      personUuid + ".jpg";
+  }
+
+  onRecommend(){
+    var recommendedImages = document.getElementById("recommendedImages");
+    recommendedImages.style.display="";
+  }
+
   render() {
     const { currentUser, edit, title, ...myFormProps } = this.props
+    const userImage = this.getUserImage(currentUser.uuid);
     return (
       <Formik
         enableReinitialize
@@ -187,6 +200,14 @@ class BasePersonForm extends Component {
                 <Messages error={this.state.error} />
                 <Fieldset title={this.props.title} action={action} />
                 <Fieldset>
+                  <Avatar size="100" src={userImage} />
+                  <div id="recommendedImages" >
+                    <p>Random Profile Pic Suggestion:</p>
+                    <img src="https://picsum.photos/50?v=1" />
+                    <img src="https://picsum.photos/50?v=2" />
+                    <img src="https://picsum.photos/50?v=3" />
+                  </div>
+                  <input type="file" id="fileElem" multiple accept="image/*" />
                   <FormGroup>
                     <Col
                       sm={2}
@@ -547,6 +568,35 @@ class BasePersonForm extends Component {
     }
   }
 
+  uploadFile(file, personUuid) {
+    var url = "https://api.cloudinary.com/v1_1/dpeirxvfn/upload";
+    var xhr = new XMLHttpRequest();
+    var fd = new FormData();
+    xhr.open('POST', url, true);
+    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+
+    xhr.onreadystatechange = function(e) {
+      if (xhr.readyState === 4 && xhr.status === 200) {
+        // File uploaded successfully
+        var response = JSON.parse(xhr.responseText);
+        // https://res.cloudinary.com/cloudName/image/upload/v1483481128/public_id.jpg
+        var url = response.secure_url;
+        // Create a thumbnail of the uploaded image, with 150px width
+        var tokens = url.split('/');
+        tokens.splice(-2, 0, 'w_150,c_scale');
+        var img = new Image(); // HTML5 Constructor
+        img.src = tokens.join('/');
+        img.alt = response.public_id;
+      }
+    };
+
+    fd.append('upload_preset', 'uz6m3wgo');
+    fd.append('tags', 'browser_upload'); // Optional - add tag for image admin in Cloudinary
+    fd.append('file', file);
+    fd.append('public_id', personUuid);
+    xhr.send(fd);
+  }
+
   save = (values, form) => {
     const { edit } = this.props
     let person = new Person(values)
@@ -564,6 +614,12 @@ class BasePersonForm extends Component {
     graphql += edit ? "" : " { uuid }"
     const variables = { person: person }
     const variableDef = "($person: PersonInput!)"
+    //
+    var fileElem = document.getElementById("fileElem");
+    console.log("test 1: ")
+    console.log(fileElem)
+    console.log("--- person uuid: " + person.uuid)
+    this.uploadFile(fileElem.files[0], person.uuid)
     return API.mutation(graphql, variables, variableDef)
   }
 

@@ -24,6 +24,7 @@ import PropTypes from "prop-types"
 import React from "react"
 import { Button, Col, ControlLabel, FormGroup, Table } from "react-bootstrap"
 import { connect } from "react-redux"
+import Avatar from 'react-avatar';
 
 class BasePersonShow extends Page {
   static propTypes = {
@@ -120,6 +121,15 @@ class BasePersonShow extends Page {
     )
   }
 
+  getUserImage(personUuid) {
+    console.log("the uuid is: ")
+    console.log(personUuid)
+    var url = "https://res.cloudinary.com/dpeirxvfn/image/upload/" + 
+      personUuid + ".jpg";
+    console.log("url = " + url)
+    return url
+  }
+
   render() {
     const { person, attendedReports, authoredReports } = this.state
     const { currentUser, ...myFormProps } = this.props
@@ -146,6 +156,8 @@ class BasePersonShow extends Page {
       (!hasPosition && currentUser.isSuperUser()) ||
       (hasPosition && currentUser.isSuperUserForOrg(position.organization)) ||
       (person.role === Person.ROLE.PRINCIPAL && currentUser.isSuperUser())
+
+    const userImage = this.getUserImage(person.uuid);
 
     return (
       <Formik enableReinitialize initialValues={person} {...myFormProps}>
@@ -198,6 +210,7 @@ class BasePersonShow extends Page {
                   action={action}
                 />
                 <Fieldset>
+                  <Avatar size="100" src={userImage} />
                   <Field
                     name="rank"
                     label={Settings.fields.person.rank}
